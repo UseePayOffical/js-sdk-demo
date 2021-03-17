@@ -13,7 +13,7 @@
 
 **RSA 密钥对应为 1024 PKCS8 格式**
 
-由于 demo 中使用了 (node-rsa)[https://www.npmjs.com/package/node-rsa] 进行了 RSA 的签名与验证签, MERCHANT_RSA_PRIVATE_KEY 不能省去行首与行尾, 格式应该如下:
+由于 demo 中使用了 [node-rsa](https://www.npmjs.com/package/node-rsa) 进行了 RSA 的签名与验证签, MERCHANT_RSA_PRIVATE_KEY 不能省去行首与行尾, 格式应该如下:
 ```
 -----BEGIN PRIVATE KEY-----
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
