@@ -1,29 +1,45 @@
+const open = require('open')
 const md5 = require('md5')
 const axios = require('axios')
 const qs = require('qs')
+var path = require('path')
+
+const bodyParser = require('body-parser')
+const NodeRSA = require('node-rsa')
 
 const express = require('express')
-const bodyParser = require('body-parser')
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.static(path.join(__dirname, '../frontend')))
+
+var server = app.listen(9001, '0.0.0.0', function () {
+  var host = server.address().address
+  var port = server.address().port
+})
 
 // ENV
 const USEEPAY_SANDBOX_ENDPOINT = 'https://pay-gateway1.uat.useepay.com/cashier'
-const USEEPAY_MERCHNAT_NO = 'YOUR_MERCHNAT_NO'
-const USEEPAY_MERCHNAT_SECRET_KEY = 'YOUR_SECRET_KEY'
-const USEEPAY_SIGN_TYPE = 'MD5'
-const USEEPAY_APP_ID = 'YOUR_APP_ID'
+const USEEPAY_MERCHANT_NO = 'Your merchant no'
+const USEEPAY_APP_ID = 'Your App Id'
+const USEEPAY_SIGN_TYPE = 'Your sign type'
+
+// MD5 Secret Key
+const USEEPAY_MERCHANT_MD5_SECRET_KEY = 'YOUR_SECRET_KEY'
+
+// RSA Keys
+const USEEPAY_RSA_PUBLICK_KEY = "UseePay's RSA publick key in MC"
+
+const MERCHANT_RSA_PRIVATE_KEY =
+  '-----BEGIN PRIVATE KEY-----\n' +
+  'Your RSA private Key' +
+  '-----END PRIVATE KEY-----'
 
 // Ngrok(内网穿透工具，也可使用其它内网穿透工具)分配的Host
 const NGROK_URL = 'YOUR_HOST'
 
-app.use('/assets', express.static('assets'))
-app.use('/css', express.static('css'))
-app.use('/js', express.static('js'))
-
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/' + 'index.html')
+  res.sendFile('frontend/' + 'index.html', { root: './' })
 })
 
 app.post('/payment/token', function (req, res) {
@@ -77,7 +93,7 @@ function buildCreatePaymentTokenRequestData(httpRequest) {
   request['transactionType'] = 'pay'
   request['version'] = '1.0'
   request['signType'] = USEEPAY_SIGN_TYPE
-  request['merchantNo'] = USEEPAY_MERCHNAT_NO
+  request['merchantNo'] = USEEPAY_MERCHANT_NO
   request['transactionId'] = new Date().getTime() + ''
   request['transactionExpirationTime'] = '30'
   request['appId'] = USEEPAY_APP_ID
@@ -171,6 +187,24 @@ function buildCreatePaymentTokenRequestData(httpRequest) {
 }
 
 function createSignature(request) {
+  if (request['signType'] == 'MD5') {
+    return createMd5Signature(request)
+  } else {
+    return createRSASignature(request)
+  }
+}
+
+function verifySignature(response) {
+  if (response['signType'] == 'MD5') {
+    return response['sign'] == createMd5Signature(response)
+  } else if (response['signType'] == 'RSA') {
+    return verifyRSASignature(response)
+  } else {
+    return 'false'
+  }
+}
+
+function createMd5Signature(request) {
   const data = Object.keys(request)
     .sort()
     .reduce((obj, key) => {
@@ -183,12 +217,51 @@ function createSignature(request) {
       str = str + key + '=' + data[key] + '&'
     }
   })
-  str = str + 'pkey=' + USEEPAY_MERCHNAT_SECRET_KEY
+  str = str + 'pkey=' + USEEPAY_MERCHANT_MD5_SECRET_KEY
   return md5(str)
 }
 
-function verifySignature(data) {
-  return data['sign'] == createSignature(data)
+function createRSASignature(request) {
+  const data = Object.keys(request)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = request[key]
+      return obj
+    }, {})
+  var str = ''
+  Object.keys(data).forEach((key) => {
+    if (data[key] != '' && key != 'sign') {
+      str = str + key + '=' + data[key] + '&'
+    }
+  })
+  str = str.substr(0, str.length - 1)
+  return new NodeRSA(MERCHANT_RSA_PRIVATE_KEY, 'pkcs8-private').sign(
+    Buffer.from(str),
+    'base64',
+  )
+}
+
+function verifyRSASignature(response) {
+  const data = Object.keys(response)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = response[key]
+      return obj
+    }, {})
+  var str = ''
+  Object.keys(data).forEach((key) => {
+    if (data[key] != '' && key != 'sign') {
+      str = str + key + '=' + data[key] + '&'
+    }
+  })
+  str = str.substr(0, str.length - 1)
+  var result = new NodeRSA(USEEPAY_RSA_PUBLICK_KEY, 'pkcs8-public').verify(
+    Buffer.from(str),
+    response['sign'],
+    'base64',
+    'base64',
+  )
+  return result
 }
 
 function getValidColorDepth(colorDepth) {
@@ -211,7 +284,4 @@ function getValidColorDepth(colorDepth) {
   }
 }
 
-var server = app.listen(9001, '0.0.0.0', function () {
-  var host = server.address().address
-  var port = server.address().port
-})
+open('http://localhost:9001')
