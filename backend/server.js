@@ -36,7 +36,7 @@ const MERCHANT_RSA_PRIVATE_KEY =
   '-----END PRIVATE KEY-----'
 
 // Ngrok(内网穿透工具，也可使用其它内网穿透工具)分配的Host
-const NGROK_URL = 'YOUR_HOST'
+const NGROK_URL = 'http://localhost:9001'
 
 app.get('/', function (req, res) {
   res.sendFile('frontend/' + 'index.html', { root: './' })
@@ -106,7 +106,7 @@ function buildCreatePaymentTokenRequestData(httpRequest) {
 
   const payerInfo = {
     paymentMethod: 'credit_card',
-    authorizationMethod: 'threeds2.0',
+    authorizationMethod: 'cvv',
   }
 
   const threeDS2RequestData = {}
@@ -284,4 +284,4 @@ function getValidColorDepth(colorDepth) {
   }
 }
 
-open('http://localhost:9001')
+open(NGROK_URL)
