@@ -4,6 +4,7 @@ $(function () {
     env: 'sandbox',
     layout: 'multiLine',
     locale: window.navigator.language,
+    merchantId: 'YOUR_MERCHANT_ID'
   })
   useepay.mount(document.getElementById('cardElement'))
 
