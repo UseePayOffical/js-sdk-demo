@@ -1,8 +1,9 @@
 # 运行
 1. 运行 `npm install`
 2. 将 server.js 中的相关配置(USEEPAY_MERCHANT_NO, USEEPAY_MERCHANT_MD5_SECRET_KEY, USEEPAY_APP_ID, USEEPAY_SIGN_TYPE, USEEPAY_RSA_PUBLICK_KEY, MERCHANT_RSA_PRIVATE_KEY) 替换成您自己的配置
-3. 使用内网穿透工具, 如 [Ngork](https://ngrok.com/) 关联到 server.js 中监听的端口(默认9001), 并将 server.js 中的 NGROK_URL 替换
-4. 运行 `npm run build`
+3. 将 index.js 中的 USEEPAY_MERCHANT_NO 替换成您自己的
+4. 使用内网穿透工具, 如 [Ngork](https://ngrok.com/) 关联到 server.js 中监听的端口(默认9001), 并将 server.js 中的 NGROK_URL 替换
+5. 运行 `npm run build`
 6. 访问 `YOUR_NGROK_HOST`
 
 # Demo 中提供的加签方式实现:
